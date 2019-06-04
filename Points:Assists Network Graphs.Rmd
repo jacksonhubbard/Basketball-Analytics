@@ -1,0 +1,271 @@
+---
+title: "Points/Assists Network"
+author: "Jackson Hubbard"
+date: "6/4/2019"
+output: pdf_document
+---
+
+
+```{r}
+# setwd("~/Desktop/STATS datasets/nba play by play/release/data")
+# game <- read.csv("1.csv",stringsAsFactors=F, nrows = 20)
+
+```
+
+play by play data from https://www.bigdataball.com/nba-historical-playbyplay-dataset/?utm_source=nbastuffer&utm_medium=website&utm_campaign=footer
+
+detailed network anlysis walkthrough- https://kateto.net/networks-r-igraph
+
+```{r}
+setwd("~/Desktop/Data+/Practice/bball practice")
+library(RCurl)
+library(jsonlite)
+library(dplyr)
+library(plotly)
+source("_functions.R")
+```
+
+```{r}
+setwd("~/Desktop/Data+/Practice/bball practice/data")
+# all.movements <- sportvu_convert_json("0021500001.json")
+pbp <- read.csv("sample-pbp-log/sample-combined-pbp-stats.csv", stringsAsFactors=F, na.strings=c("", " ", "NA"))
+
+
+```
+
+
+```{r}
+one_game <- pbp[ which(pbp$game_id == "21700001"), ]
+
+# only focused on points/assists so cut down game into only plays w/ FG
+plays_with_FG <- one_game[ which(one_game$points== 2 | one_game$points == 3), ]
+
+```
+
+
+```{r}
+#only use variables we care about
+new_vars <- c("team", "player", "assist", "points", "type", "description")
+points_assists <- plays_with_FG[new_vars]
+
+```
+
+```{r}
+# boston_players <- c("Gordon Hayward", "Jayson Tatum", "Al Horford", "Kyrie Irving", "Jaylen Brown", "Marcus Smart", "Aron Baynes", "Terry Rozier", "Semi Ojeleye", "Abdel Nader", "Daniel Theis")
+
+boston_players <- c("Hayward", "Tatum", "Horford", "Irving", "Brown", "Smart", "Baynes", "Rozier", "Ojeleye", "Nader", "Theis")
+
+
+boston_points <- c(2, 14, 9, 22, 25, 12, 6, 9, 0, 0, 0)
+
+# cavs_players <- c("LeBron James", "Jae Crowder", "Kevin Love", "Dwyane Wade", "Derrick Rose", "Tristan Thompson", "JR Smith", "Iman Shumpert", "Jeff Green", "Kyle Korver", "Jose Calderon", "Channing Frye", "Cedi Osman")
+
+cavs_players <- c("James", "Crowder", "Love", "Wade", "Rose", "Thompson", "Smith", "Shumpert", "Green", "Korver", "Calderon", "Frye", "Osman")
+
+cavs_points <- c(29, 11, 15, 8, 14, 5, 10, 4, 6, 0, 0, 0, 0)
+
+points_boston <- data.frame(boston_players, boston_points)
+points_cavs <- data.frame(cavs_players, cavs_points)
+
+```
+
+
+
+```{r}
+# select only first two cols (team, player and assist)
+assists <- points_assists[c(1:3)]
+
+# now get rid of na's
+#complete.cases(assists)
+assists <- na.omit(assists)
+
+# get df wit only boston's assists
+boston_assists <- assists[assists$team== "BOS", ]
+boston_assists <- boston_assists[c(2:3)]
+
+# get df wit only cavs's assists
+cavs_assists <- assists[assists$team== "CLE", ]
+cavs_assists <- cavs_assists[c(2:3)]
+
+```
+
+
+```{r}
+# separate player name into first and last so graph labels are cleaner
+library(tidyr)
+points_boston <- extract(points_boston, boston_players, c("Shooter_first", "Shooter_last"), "([^ ]+) (.*)")
+points_cavs <- extract(points_cavs, cavs_players, c("Shooter_first", "Shooter_last"), "([^ ]+) (.*)")
+
+boston_assists <- extract(boston_assists, player, c("Shooter_first", "Shooter_last"), "([^ ]+) (.*)")
+
+boston_assists <- extract(boston_assists, assist, c("Assist_first", "Assist_last"), "([^ ]+) (.*)")
+
+
+cavs_assists <- extract(cavs_assists, player, c("Shooter_first", "Shooter_last"), "([^ ]+) (.*)")
+
+cavs_assists <- extract(cavs_assists, assist, c("Assist_first", "Assist_last"), "([^ ]+) (.*)")
+
+# now get rid of first names
+boston_assists <- boston_assists[c(2,4)]
+cavs_assists <- cavs_assists[c(2,4)]
+
+# change order so col 1 = passer, col 2 = scorer so edge arrows are right
+boston_assists <- boston_assists[, c(2,1)]
+cavs_assists <- cavs_assists[, c(2,1)]
+
+```
+
+
+
+
+
+```{r}
+# overwrited implementation of autocurve.edges
+
+# found online to try to force edges to not overlap https://stackoverflow.com/questions/16875547/using-igraph-how-to-force-curvature-when-arrows-point-in-opposite-directions
+
+# this fixes issue of autocurve.edges also curving edges for unique observations.
+
+autocurve.edges2 <-function (graph, start = 0.5)
+{
+    cm <- count.multiple(graph)
+    mut <-is.mutual(graph)  #are connections mutual?
+    el <- apply(get.edgelist(graph, names = FALSE), 1, paste,
+        collapse = ":")
+    ord <- order(el)
+    res <- numeric(length(ord))
+    p <- 1
+    while (p <= length(res)) {
+        m <- cm[ord[p]]
+        mut.obs <-mut[ord[p]] #are the connections mutual for this point?
+        idx <- p:(p + m - 1)
+        if (m == 1 & mut.obs==FALSE) { #no mutual conn = no curve
+            r <- 0
+        }
+        else {
+            r <- seq(-start, start, length = m)
+        }
+        res[ord[idx]] <- r
+        p <- p + m
+    }
+    res
+}
+
+```
+
+
+
+
+STILL NOT CORRECT
+see double arrow between Horford and Irving
+```{r}
+library("igraph")
+boston_net <- graph_from_data_frame(d=boston_assists, vertices=boston_players, directed=T) 
+V(boston_net)$size <- boston_points * 3
+V(boston_net)$color <- "#007A33"
+V(boston_net)$label.cex <- 1.5
+V(boston_net)$label.color <- "black"
+
+E(boston_net)$color <- "black"
+
+l <- layout_with_fr(boston_net)
+
+plot(boston_net, edge.arrow.size= .4, curved = T, layout = l)
+
+curves = autocurve.edges(boston_net)
+tkplot(boston_net, bg = "white", edge.curved = curves)
+```
+
+
+Cavs Network
+STILL NOT CORRECT
+see double arrow between James and Rose and James and Crowder
+
+```{r}
+cavs_net <- graph_from_data_frame(d=cavs_assists, vertices=cavs_players, directed=T)
+
+V(cavs_net)$size <- cavs_points * 3
+V(cavs_net)$color <- "#6F263D"
+V(cavs_net)$label.cex <- 1.5
+V(cavs_net)$label.color <- "#FFB81C"
+
+E(cavs_net)$color <- "black"
+
+l <- layout_with_fr(cavs_net)
+
+plot(cavs_net, edge.arrow.size= .4, curved = T, layout = l)
+
+curves = autocurve.edges2(cavs_net)
+tkplot(cavs_net, bg = "white", edge.curved = curves)
+
+```
+
+
+
+```{r}
+# manipulate assists data frame to only have unique assist --> shooter paths and track count
+library(plyr)
+
+boston_assists2 <- boston_assists
+boston_assists2$count = 1
+
+boston_assists2 <- ddply(boston_assists2,.(Assist_last,Shooter_last),nrow)
+
+colnames(boston_assists2)[3] <- "count"
+
+
+cavs_assists2 <- cavs_assists
+cavs_assists2$count = 1
+
+cavs_assists2 <- ddply(cavs_assists2,.(Assist_last,Shooter_last),nrow)
+
+colnames(cavs_assists2)[3] <- "count"
+      
+```
+
+
+
+CORRECT VERSIONS- WEIGHTED GRAPHS
+havent figured out how to use unweighted edges to fix error cases
+
+```{r}
+library("igraph")
+
+boston_weighted_net <- graph_from_data_frame(d=boston_assists2, vertices=boston_players, directed=T) 
+
+V(boston_weighted_net)$size <- boston_points * 3
+V(boston_weighted_net)$color <- "#007A33"
+V(boston_weighted_net)$label.cex <- 1.5
+V(boston_weighted_net)$label.font <- 2
+V(boston_weighted_net)$label.family <- "mono"
+V(boston_weighted_net)$label.color <- "#BA9653"
+
+E(boston_weighted_net)$color <- "black"
+E(boston_weighted_net)$width <- boston_assists2$count * 3
+  
+curves = autocurve.edges2(boston_weighted_net)
+
+tkplot(boston_weighted_net, edge.curved = curves)
+
+```
+
+
+```{r}
+cavs_weighted_net <- graph_from_data_frame(d=cavs_assists2, vertices=cavs_players, directed=T) 
+
+V(cavs_weighted_net)$size <- cavs_points * 3
+V(cavs_weighted_net)$color <- "#6F263D"
+V(cavs_weighted_net)$label.cex <- 1.5
+V(cavs_weighted_net)$label.font <- 2
+V(cavs_weighted_net)$label.family <- "mono"
+V(cavs_weighted_net)$label.color <- "#FFB81C"
+
+E(cavs_weighted_net)$color <- "black"
+E(cavs_weighted_net)$width <- cavs_assists2$count * 3
+
+
+curves = autocurve.edges2(cavs_weighted_net)
+
+tkplot(cavs_weighted_net, edge.curved = curves, edge_label_dist = 3)
+
+```

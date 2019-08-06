@@ -1,0 +1,774 @@
+---
+title: "Web Scraping"
+author: "Jackson Hubbard"
+date: "6/11/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+#Loading the rvest package
+library('rvest')
+
+#Specifying the url for desired website to be scraped
+url <- "https://www.sports-reference.com/cbb/schools/duke/2019-schedule.html"
+
+#Reading the HTML code from the website
+webpage <- read_html(url)
+```
+
+
+```{r}
+# Use SelectorGadget Chrome extension (CSS selector) to scrape the website
+# get the label for the varible you want and put inside quotes
+date_data_html <- html_nodes(webpage,'.right+ .left a')
+
+#Converting the ranking data to text
+date_data <- html_text(date_data_html)
+
+#Let's have a look at the rankings
+head(date_data)
+```
+```{r}
+# Use SelectorGadget Chrome extension (CSS selector) to scrape the website
+# get the label for the varible you want and put inside quotes
+date_data_html <- html_nodes(webpage,'.right+ .left a')
+
+#Converting the ranking data to text
+date_data <- html_text(date_data_html)
+
+#Let's have a look at the rankings
+head(date_data)
+```
+
+
+```{r}
+duke_scores_all <- data_frame(date=character(),
+                 time=character(),
+                 type=character(),
+                 opponet=character(),
+                 oppon_conf=character(),
+                 neutral= character(),
+                 stadium=character(),
+                 win=character(),
+                 duke_score=integer(),
+                 opponet_score=integer(),
+                 stringsAsFactors=FALSE)
+# duke_total <- data.frame()
+```
+
+
+```{r}
+list_dates = c("2019", "2018", "2017", "2016", "2015", "2014", "2013", "2012", "2011")
+
+list_dates <- sapply(list_dates, paste, "-schedule.html", sep = "")
+url <- "https://www.sports-reference.com/cbb/schools/duke/"
+list_of_pages <- sapply(url, paste, list_dates, sep="")
+
+# for (url_page in list_of_pages) {
+#  current_year(url_page)
+# }
+i <= 1
+for (i in length(list_of_pages)) {
+  url_now <- list_of_pages[i]
+  current_year(url_now)
+  i+1
+}
+
+# url <- "https://www.sports-reference.com/cbb/schools/duke/2015-schedule.html"
+current_year <- function(url) {
+      webpage <- read_html(url)
+
+      # Use SelectorGadget Chrome extension (CSS selector) to scrape the website
+      # get the label for the varible you want and put inside quotes
+      date_data_html <- html_nodes(webpage,'.right+ .left a')
+      
+      #Converting the ranking data to text
+      date_data <- html_text(date_data_html)
+      
+      
+      # same thing for time- repeat for each variable you need
+      time_data_html <- html_nodes(webpage,'.left:nth-child(3)')
+      time_data <- html_text(time_data_html)
+      
+      type_data_html <- html_nodes(webpage,'.left:nth-child(4)')
+      type_data <- html_text(type_data_html)
+      
+      opponet_data_html <- html_nodes(webpage,'.left:nth-child(6)')
+      opponet_data <- html_text(opponet_data_html)
+      
+      opponet_conf_data_html <- html_nodes(webpage,'.left:nth-child(7)')
+      opponet_conf_data <- html_text(opponet_conf_data_html)
+      
+      neutral_data_html <- html_nodes(webpage,'.left:nth-child(5)')
+      neutral_data <- html_text(neutral_data_html)
+      neutral_data[neutral_data==""] <- NA
+      
+      stadium_data_html <- html_nodes(webpage,'.left:nth-child(15)')
+      stadium_data <- html_text(stadium_data_html)
+      
+      win_data_html <- html_nodes(webpage,'.left:nth-child(8)')
+      win_data <- html_text(win_data_html)
+      
+      duke_score_data_html <- html_nodes(webpage,'.left+.right')
+      duke_score_data <- html_text(duke_score_data_html)
+      # duke_score_data <- duke_score_data[1:38]
+      i = 0
+      for (i in length(duke_score_data)) {
+        if(length(duke_score_data[i]) != 2 | 3) {
+          duke_score_data = duke_score_data[1:i-1]
+        }
+          
+      }
+      duke_score_data
+      
+      opponet_score_html <- html_nodes(webpage,'.right:nth-child(10)')
+      opponet_score_data <- html_text(opponet_score_html)
+      
+      
+      # Combining all the lists to form a data frame
+      
+      duke_scores_now <-data.frame(date = date_data, time = time_data, type = type_data, opponet = opponet_data, oppon_conf = opponet_conf_data, neutral = neutral_data, stadium = stadium_data, win = win_data, duke_score = duke_score_data, opponet_score = opponet_score_data)
+      
+      
+      duke_scores_all <- rbind(duke_scores_all, duke_scores_now)
+      duke_total <- rbind(duke_total, duke_scores_now)
+      duke_total
+}
+```
+
+```{r}
+list_dates = c("2019", "2018", "2017", "2016", "2015", "2014", "2013", "2012", "2011")
+
+list_dates <- sapply(list_dates, paste, "-schedule.html", sep = "")
+url <- "https://www.sports-reference.com/cbb/schools/duke/"
+list_of_pages <- sapply(url, paste, list_dates, sep="")
+
+# for (url_page in list_of_pages) {
+#  current_year(url_page)
+# }
+i <= 1
+for (i in length(list_of_pages)) {
+  url_now <- list_of_pages[i]
+  current_year(url_now)
+  i+1
+}
+
+```
+
+
+# better way to do it- not completely right
+# see https://www.datacamp.com/community/tutorials/r-web-scraping-rvest
+
+
+```{r}
+# better way to do it- not completely right
+
+library(dplyr)
+get_date_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('.right+ .left a') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()                             
+}
+
+get_time_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('.left:nth-child(3)') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()                             
+}
+
+get_type_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('.left:nth-child(4)') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()                             
+}
+
+get_opponet_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('.left:nth-child(6)') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()                             
+}
+
+get_opponet_conf_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('.left:nth-child(7)') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()                             
+}
+
+get_neutral_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('left:nth-child(5)') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()
+}
+
+get_stadium_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('.left:nth-child(15)') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()                             
+}
+
+get_win_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('.left:nth-child(8)') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()                             
+    }
+
+get_duke_score_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('.left+ .right') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()                             
+}
+
+get_opponet_score_data <- function(html){
+      html %>% 
+        # insert relevant tag
+        html_nodes('.right:nth-child(10)') %>%      
+        html_text() %>%                       
+        # Convert the list into a vector
+        unlist()                             
+}
+
+
+```
+
+
+```{r}
+# test functions to make sure they work
+page <- read_html(url)
+(dates <- get_date_data(page))
+
+
+(times <- get_time_data(page))
+(types <- get_type_data(page))
+(opps <- get_opponet_data(page))
+(opps_conf <- get_opponet_conf_data(page))
+#(neutral_sites <- get_neutral_data(page))
+(stadiums <- get_stadium_data(page))
+
+
+
+```
+
+```{r}
+library(dplyr)
+get_data_table <- function(html){
+
+      # Extract the Basic information from the HTML
+      dates <- get_date_data(html)
+      times <- get_time_data(html)
+      types <- get_type_data(html)
+      opponets <- get_opponet_data(html)
+      opponet_confs <- get_opponet_conf_data(html)
+      #neutral_sites <- get_neutral_data(html)
+      neutral_sites[neutral_sites==""] <- NA
+      
+      stadiums <- get_stadium_data(html)
+      wins <- get_win_data(html)
+      duke_scores <- get_duke_score_data(html)
+      i = 0
+      for (i in length(duke_scores)) {
+        if(length(duke_scores[i]) != 2 | 3) {
+          duke_scores = duke_scores[1:i-1]
+        }
+          
+      }
+      opponet_scores <- get_opponet_score_data(html)
+
+      # Combine into a tibble
+      combined_data <- tibble(date = dates, time = times, type = types, opponet = opponets, opponet_conf = opponet_confs, #neutral_site = neutral_sites, 
+                              stadium = stadiums, win = wins, duke_score= duke_scores, opponet_score= opponet_scores) 
+
+    }
+```
+
+
+```{r}
+library(xml2)
+get_data_from_url <- function(url){
+      html <- read_html(url)
+      get_data_table(html)
+    }
+```
+
+```{r}
+setwd("~/Desktop/Data+/Practice/bball practice")
+scrape_write_table <- function(url){
+      
+      # num_seasons <- 5
+      # # Read first page
+      # page <- read_html(url)
+
+      
+      list_dates = c("2019", "2018", "2017", "2016", "2015", "2014", "2013", "2012", "2011")
+
+      list_dates <- sapply(list_dates, paste, "-schedule.html", sep = "")
+      base_url <- "https://www.sports-reference.com/cbb/schools/duke/"
+      list_of_pages <- sapply(base_url, paste, list_dates, sep="")
+
+    
+
+      # Apply the extraction and bind the individual results back into one table, 
+      # which is then written as a tsv file into the working directory
+      list_of_pages %>% 
+        # Apply to all URLs
+        map(get_data_from_url) %>%  
+        # Combine the tibbles into one tibble
+        bind_rows() %>%                           
+        # Write a tab-separated file
+        write.csv(str(duke,'.csv'))     
+    }
+
+```
+
+
+url = https://www.sports-reference.com/cbb/schools/duke/ + 2015-schedule.html
+
+```{r}
+library("purrr")
+  url = "https://www.sports-reference.com/cbb/schools/duke/"
+
+  scrape_write_table(url)
+
+  duke_tbl <- read_csv('duke.csv')
+  tail(duke_tbl, 5)
+```
+
+
+
+
+
+
+
+
+
+NON LOOP WAY TO DO IT
+
+
+2019
+
+```{r}
+      #Specifying the url for desired website to be scraped
+      url <- "https://www.sports-reference.com/cbb/schools/duke/2019-schedule.html"
+
+      #Reading the HTML code from the website
+      webpage <- read_html(url)
+
+      # Use SelectorGadget Chrome extension (CSS selector) to scrape the website
+      # get the label for the varible you want and put inside quotes
+      date_data_html <- html_nodes(webpage,'.right+ .left a')
+      
+      #Converting the ranking data to text
+      date_data <- html_text(date_data_html)
+      
+      
+      # same thing for time- repeat for each variable you need
+      time_data_html <- html_nodes(webpage,'.left:nth-child(3)')
+      time_data <- html_text(time_data_html)
+      
+      type_data_html <- html_nodes(webpage,'.left:nth-child(4)')
+      type_data <- html_text(type_data_html)
+      
+      opponet_data_html <- html_nodes(webpage,'.left:nth-child(6)')
+      opponet_data <- html_text(opponet_data_html)
+      
+      opponet_conf_data_html <- html_nodes(webpage,'.left:nth-child(7)')
+      opponet_conf_data <- html_text(opponet_conf_data_html)
+      
+      neutral_data_html <- html_nodes(webpage,'.left:nth-child(5)')
+      neutral_data <- html_text(neutral_data_html)
+      neutral_data[neutral_data==""] <- NA
+      
+      stadium_data_html <- html_nodes(webpage,'.left:nth-child(15)')
+      stadium_data <- html_text(stadium_data_html)
+      
+      win_data_html <- html_nodes(webpage,'.left:nth-child(8)')
+      win_data <- html_text(win_data_html)
+      
+      duke_score_data_html <- html_nodes(webpage,'.left+.right')
+      duke_score_data <- html_text(duke_score_data_html) %>% as.numeric()
+      # duke_score_data <- duke_score_data[1:38]
+      i = 0
+      for (i in length(duke_score_data)) {
+        if(length(duke_score_data[i]) != 2 | 3) {
+          duke_score_data = duke_score_data[1:i-1]
+        }
+          
+      }
+      
+      opponet_score_html <- html_nodes(webpage,'.right:nth-child(10)')
+      opponet_score_data <- html_text(opponet_score_html) %>% as.numeric()
+      
+      
+      # Combining all the lists to form a data frame
+      
+      duke_scores_2019 <-data.frame(date = date_data, time = time_data, type = type_data, opponet = opponet_data, oppon_conf = opponet_conf_data, neutral = neutral_data, stadium = stadium_data, win = win_data, duke_score = duke_score_data, opponet_score = opponet_score_data, season = 2019)
+```
+
+
+```{r}
+    #Specifying the url for desired website to be scraped
+      url <- "https://www.sports-reference.com/cbb/schools/duke/2018-schedule.html"
+
+      #Reading the HTML code from the website
+      webpage <- read_html(url)
+
+      # Use SelectorGadget Chrome extension (CSS selector) to scrape the website
+      # get the label for the varible you want and put inside quotes
+      date_data_html <- html_nodes(webpage,'.right+ .left a')
+      
+      #Converting the ranking data to text
+      date_data <- html_text(date_data_html)
+      
+      
+      # same thing for time- repeat for each variable you need
+      time_data_html <- html_nodes(webpage,'.left:nth-child(3)')
+      time_data <- html_text(time_data_html)
+      
+      type_data_html <- html_nodes(webpage,'.left:nth-child(4)')
+      type_data <- html_text(type_data_html)
+      
+      opponet_data_html <- html_nodes(webpage,'.left:nth-child(6)')
+      opponet_data <- html_text(opponet_data_html)
+      
+      opponet_conf_data_html <- html_nodes(webpage,'.left:nth-child(7)')
+      opponet_conf_data <- html_text(opponet_conf_data_html)
+      
+      neutral_data_html <- html_nodes(webpage,'.left:nth-child(5)')
+      neutral_data <- html_text(neutral_data_html)
+      neutral_data[neutral_data==""] <- NA
+      
+      stadium_data_html <- html_nodes(webpage,'.left:nth-child(15)')
+      stadium_data <- html_text(stadium_data_html)
+      
+      win_data_html <- html_nodes(webpage,'.left:nth-child(8)')
+      win_data <- html_text(win_data_html)
+      
+      duke_score_data_html <- html_nodes(webpage,'.left+.right')
+      duke_score_data <- html_text(duke_score_data_html) %>% as.numeric()
+      # duke_score_data <- duke_score_data[1:38]
+      i = 0
+      for (i in length(duke_score_data)) {
+        if(length(duke_score_data[i]) != 2 | 3) {
+          duke_score_data = duke_score_data[1:i-1]
+        }
+          
+      }
+      
+      opponet_score_html <- html_nodes(webpage,'.right:nth-child(10)')
+      opponet_score_data <- html_text(opponet_score_html) %>% as.numeric()
+      
+      
+      # Combining all the lists to form a data frame
+      
+      duke_scores_2018 <-data.frame(date = date_data, time = time_data, type = type_data, opponet = opponet_data, oppon_conf = opponet_conf_data, neutral = neutral_data, stadium = stadium_data, win = win_data, duke_score = duke_score_data, opponet_score = opponet_score_data, season = 2018)
+```
+
+```{r}
+      #Specifying the url for desired website to be scraped
+      url <- "https://www.sports-reference.com/cbb/schools/duke/2017-schedule.html"
+
+      #Reading the HTML code from the website
+      webpage <- read_html(url)
+
+      # Use SelectorGadget Chrome extension (CSS selector) to scrape the website
+      # get the label for the varible you want and put inside quotes
+      date_data_html <- html_nodes(webpage,'.right+ .left a')
+      
+      #Converting the ranking data to text
+      date_data <- html_text(date_data_html)
+      
+      
+      # same thing for time- repeat for each variable you need
+      time_data_html <- html_nodes(webpage,'.left:nth-child(3)')
+      time_data <- html_text(time_data_html)
+      
+      type_data_html <- html_nodes(webpage,'.left:nth-child(4)')
+      type_data <- html_text(type_data_html)
+      
+      opponet_data_html <- html_nodes(webpage,'.left:nth-child(6)')
+      opponet_data <- html_text(opponet_data_html)
+      
+      opponet_conf_data_html <- html_nodes(webpage,'.left:nth-child(7)')
+      opponet_conf_data <- html_text(opponet_conf_data_html)
+      
+      neutral_data_html <- html_nodes(webpage,'.left:nth-child(5)')
+      neutral_data <- html_text(neutral_data_html)
+      neutral_data[neutral_data==""] <- NA
+      
+      stadium_data_html <- html_nodes(webpage,'.left:nth-child(15)')
+      stadium_data <- html_text(stadium_data_html)
+      
+      win_data_html <- html_nodes(webpage,'.left:nth-child(8)')
+      win_data <- html_text(win_data_html)
+      
+      duke_score_data_html <- html_nodes(webpage,'.left+.right')
+      duke_score_data <- html_text(duke_score_data_html) %>% as.numeric()
+      # duke_score_data <- duke_score_data[1:38]
+      i = 0
+      for (i in length(duke_score_data)) {
+        if(length(duke_score_data[i]) != 2 | 3) {
+          duke_score_data = duke_score_data[1:i-1]
+        }
+          
+      }
+      
+      opponet_score_html <- html_nodes(webpage,'.right:nth-child(10)')
+      opponet_score_data <- html_text(opponet_score_html) %>% as.numeric()
+      
+      
+      # Combining all the lists to form a data frame
+      
+      duke_scores_2017 <-data.frame(date = date_data, time = time_data, type = type_data, opponet = opponet_data, oppon_conf = opponet_conf_data, neutral = neutral_data, stadium = stadium_data, win = win_data, duke_score = duke_score_data, opponet_score = opponet_score_data, season = 2017)
+```
+
+```{r}
+      #Specifying the url for desired website to be scraped
+      url <- "https://www.sports-reference.com/cbb/schools/duke/2016-schedule.html"
+
+      #Reading the HTML code from the website
+      webpage <- read_html(url)
+
+      # Use SelectorGadget Chrome extension (CSS selector) to scrape the website
+      # get the label for the varible you want and put inside quotes
+      date_data_html <- html_nodes(webpage,'.right+ .left a')
+      
+      #Converting the ranking data to text
+      date_data <- html_text(date_data_html)
+      
+      
+      # same thing for time- repeat for each variable you need
+      time_data_html <- html_nodes(webpage,'.left:nth-child(3)')
+      time_data <- html_text(time_data_html)
+      
+      type_data_html <- html_nodes(webpage,'.left:nth-child(4)')
+      type_data <- html_text(type_data_html)
+      
+      opponet_data_html <- html_nodes(webpage,'.left:nth-child(6)')
+      opponet_data <- html_text(opponet_data_html)
+      
+      opponet_conf_data_html <- html_nodes(webpage,'.left:nth-child(7)')
+      opponet_conf_data <- html_text(opponet_conf_data_html)
+      
+      neutral_data_html <- html_nodes(webpage,'.left:nth-child(5)')
+      neutral_data <- html_text(neutral_data_html)
+      neutral_data[neutral_data==""] <- NA
+      
+      stadium_data_html <- html_nodes(webpage,'.left:nth-child(15)')
+      stadium_data <- html_text(stadium_data_html)
+      
+      win_data_html <- html_nodes(webpage,'.left:nth-child(8)')
+      win_data <- html_text(win_data_html)
+      
+      duke_score_data_html <- html_nodes(webpage,'.left+.right')
+      duke_score_data <- html_text(duke_score_data_html) %>% as.numeric()
+      # duke_score_data <- duke_score_data[1:38]
+      i = 0
+      for (i in length(duke_score_data)) {
+        if(length(duke_score_data[i]) != 2 | 3) {
+          duke_score_data = duke_score_data[1:i-1]
+        }
+          
+      }
+      
+      opponet_score_html <- html_nodes(webpage,'.right:nth-child(10)')
+      opponet_score_data <- html_text(opponet_score_html) %>% as.numeric()
+      
+      
+      # Combining all the lists to form a data frame
+      
+      duke_scores_2016 <-data.frame(date = date_data, time = time_data, type = type_data, opponet = opponet_data, oppon_conf = opponet_conf_data, neutral = neutral_data, stadium = stadium_data, win = win_data, duke_score = duke_score_data, opponet_score = opponet_score_data, season = 2016)
+```
+
+```{r}
+      #Specifying the url for desired website to be scraped
+      url <- "https://www.sports-reference.com/cbb/schools/duke/2015-schedule.html"
+
+      #Reading the HTML code from the website
+      webpage <- read_html(url)
+
+      # Use SelectorGadget Chrome extension (CSS selector) to scrape the website
+      # get the label for the varible you want and put inside quotes
+      date_data_html <- html_nodes(webpage,'.right+ .left a')
+      
+      #Converting the ranking data to text
+      date_data <- html_text(date_data_html)
+      
+      
+      # same thing for time- repeat for each variable you need
+      time_data_html <- html_nodes(webpage,'.left:nth-child(3)')
+      time_data <- html_text(time_data_html)
+      
+      type_data_html <- html_nodes(webpage,'.left:nth-child(4)')
+      type_data <- html_text(type_data_html)
+      
+      opponet_data_html <- html_nodes(webpage,'.left:nth-child(6)')
+      opponet_data <- html_text(opponet_data_html)
+      
+      opponet_conf_data_html <- html_nodes(webpage,'.left:nth-child(7)')
+      opponet_conf_data <- html_text(opponet_conf_data_html)
+      
+      neutral_data_html <- html_nodes(webpage,'.left:nth-child(5)')
+      neutral_data <- html_text(neutral_data_html)
+      neutral_data[neutral_data==""] <- NA
+      
+      stadium_data_html <- html_nodes(webpage,'.left:nth-child(15)')
+      stadium_data <- html_text(stadium_data_html)
+      
+      win_data_html <- html_nodes(webpage,'.left:nth-child(8)')
+      win_data <- html_text(win_data_html)
+      
+      duke_score_data_html <- html_nodes(webpage,'.left+.right')
+      duke_score_data <- html_text(duke_score_data_html) %>% as.numeric()
+      # duke_score_data <- duke_score_data[1:38]
+      i = 0
+      for (i in length(duke_score_data)) {
+        if(length(duke_score_data[i]) != 2 | 3) {
+          duke_score_data = duke_score_data[1:i-1]
+        }
+          
+      }
+      
+      opponet_score_html <- html_nodes(webpage,'.right:nth-child(10)')
+      opponet_score_data <- html_text(opponet_score_html) %>% as.numeric()
+      
+      
+      # Combining all the lists to form a data frame
+      
+      duke_scores_2015 <-data.frame(date = date_data, time = time_data, type = type_data, opponet = opponet_data, oppon_conf = opponet_conf_data, neutral = neutral_data, stadium = stadium_data, win = win_data, duke_score = duke_score_data, opponet_score = opponet_score_data, season = 2015)
+```
+
+
+
+```{r}
+all_duke_scores <- rbind(duke_scores_2019, duke_scores_2018, duke_scores_2017, duke_scores_2016, duke_scores_2015)
+```
+
+
+```{r}
+acc_games <- subset(all_duke_scores, oppon_conf == "ACC" & type == "REG")
+
+acc_games$difference <- acc_games$duke_score - acc_games$opponet_score
+
+acc_games$date <- as.character(acc_games$date)
+# acc_games$year <- substr(acc_games$date, 13, 17)
+acc_games$opponet <- gsub("\\s*\\([^\\)]+\\)", "", as.character(acc_games$opponet))
+acc_games$home <- ifelse(acc_games$stadium == "Cameron Indoor Stadium", "Home", "Away")
+
+acc_games <- acc_games %>% mutate(opponet_short = case_when(
+                                          opponet == "North Carolina" ~	"UNC",
+                                          opponet == "Virginia" ~ "UVA",
+                                          opponet == "Florida State" ~ "FSU",
+                                          opponet == "Pittsburgh" ~ "Pitt",
+                                          opponet == "Virginia Tech" ~ "VT",
+                                          opponet == "Syracuse" ~ "SYR",
+                                          opponet == "Georgia Tech" ~ "GT",
+                                          opponet == "Boston College" ~ "BC",
+                                          opponet == "Clemson" ~ "CLEM",
+                                          opponet == "Louisville" ~ "LOU",
+                                          opponet == "North Carolina State" ~ "NCST",
+                                          opponet == "Wake Forest" ~ "WF",
+                                          opponet == "Miami" ~ "MIA",
+                                          opponet == "Notre Dame" ~ "ND"
+                                          ))
+```
+
+
+
+
+```{r}
+acc_games_2019 <- subset(acc_games, season == "2019")
+acc_games_2019 <- acc_games_2019 %>% group_by(opponet) %>% filter(n()>1)
+
+ggplot(acc_games_2019, aes(fill=home, y=difference, x=opponet_short)) + 
+    geom_bar(stat="identity", position="dodge") + labs(title = "Duke Score Differentials 2019", y = "Difference", x = "Opponet") + scale_fill_manual(values = c("#e87f00", "#00539B"))
+```
+
+```{r}
+acc_games_2018 <- subset(acc_games, season == "2018")
+acc_games_2018 <- acc_games_2018 %>% group_by(opponet) %>% filter(n()>1)
+
+ggplot(acc_games_2018, aes(fill=home, y=difference, x=opponet_short)) + 
+    geom_bar(stat="identity", position="dodge") + labs(title = "Duke Score Differentials 2018", y = "Difference", x = "Opponet") + scale_fill_manual(values = c("#e87f00", "#00539B"))
+```
+
+
+
+
+```{r}
+acc_games_2017 <- subset(acc_games, season == "2017")
+acc_games_2017 <- acc_games_2017 %>% group_by(opponet) %>% filter(n()>1)
+
+ggplot(acc_games_2017, aes(fill=home, y=difference, x=opponet_short)) + 
+    geom_bar(stat="identity", position="dodge") + labs(title = "Duke Score Differentials 2017", y = "Difference", x = "Opponet") + scale_fill_manual(values = c("#e87f00", "#00539B"))
+```
+
+```{r}
+acc_games_2016 <- subset(acc_games, season == "2016")
+acc_games_2016 <- acc_games_2016 %>% group_by(opponet) %>% filter(n()>1)
+
+ggplot(acc_games_2016, aes(fill=home, y=difference, x=opponet_short)) + 
+    geom_bar(stat="identity", position="dodge") + labs(title = "Duke Score Differentials 2016", y = "Difference", x = "Opponet") + scale_fill_manual(values = c("#e87f00", "#00539B"))
+```
+
+```{r}
+acc_games_2015 <- subset(acc_games, season == "2015")
+acc_games_2015 <- acc_games_2015 %>% group_by(opponet) %>% filter(n()>1)
+
+ggplot(acc_games_2015, aes(fill=home, y=difference, x=opponet_short)) + 
+    geom_bar(stat="identity", position="dodge") + labs(title = "Duke Score Differentials 2015", y = "Difference", x = "Opponet") + scale_fill_manual(values = c("#e87f00", "#00539B"))
+```
+
+
+```{r}
+acc_games_combined <- acc_games %>% group_by(opponet, season) %>% filter(n()>1)
+
+ggplot(acc_games_combined, aes(fill=home, y=difference, x = opponet_short)) + 
+    geom_bar(stat="identity", position="dodge") + labs(title = "Duke Score Differentials 2015-2019", y = "Difference", x = "Opponet") + scale_fill_manual(values = c("#e87f00", "#00539B"))
+```
+
+```{r}
+ggplot(data = acc_games_combined, aes(x = opponet_short, y = difference, fill = home)) + 
+    geom_bar(stat = "identity", position= "dodge", width = 0.85) +
+    facet_wrap(~season, strip.position = "bottom", scales = "free_x", nrow = 1) +
+    theme(panel.spacing = unit(0.5, "lines"), 
+         strip.background = element_blank(),
+         strip.placement = "outside",
+         axis.text.x = element_text(color = "grey20", size = 6, hjust = 0.5, vjust = .5, face = "plain"),
+         plot.title = element_text(hjust = 0.5),
+        panel.border = element_blank(),  
+        panel.grid.minor = element_blank()) + 
+  labs(title = "Duke Score Differentials 2015-2019", y = "Score Difference (Duke - Opponet)", x = "Opponet", fill = "Game Location") + scale_fill_manual(values = c("#e87f00", "#00539B"), labels = c("Away", "Cameron Indoor")) + ylim(-20, 45) + guides(fill = guide_legend(reverse = TRUE))
+
+```

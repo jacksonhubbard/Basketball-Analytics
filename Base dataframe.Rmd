@@ -1,0 +1,418 @@
+---
+title: "Base Dataframe- generates all links for a given season"
+author: "Jackson Hubbard"
+date: "6/27/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+
+# this generates dataset that contains date, opponet, score, and url's for pbp and boxscore
+season_url <- "https://www.espn.com/mens-college-basketball/team/schedule/_/id/150/season/2015"
+webpage <- read_html(season_url)
+dates <- html_nodes(webpage,'.Table2__even+ .Table2__even .Table2__td:nth-child(1)') %>% html_text()
+  
+dates.to.remove <- grepl("MEN'S", dates) | grepl("Date", dates) | grepl("Regular Season", dates)
+# remove found elements
+dates <- dates[!dates.to.remove]
+
+opponets <- html_nodes(webpage,'.tc+ span a') %>% html_text()
+opponet_logo <- html_nodes(webpage,'.pr2 img')
+opponet_logo_link <- html_attr(opponet_logo, "src")
+
+scores <- html_nodes(webpage,'.ml4 a') %>% html_text()
+gameURLs <- html_nodes(webpage,'.ml4 a') %>% html_attr("href") 
+
+win <- html_nodes(webpage,'.Table2__td .fw-bold') %>% html_text() 
+
+location <- html_nodes(webpage,'.pr2:nth-child(1)') %>% html_text() 
+
+season_stats <- data.frame(date = dates, location = location, opponet = opponets, score = scores, win = win, oppon_logo_url = opponet_logo_link, pbp_url = gameURLs, boxscore_url = gameURLs, teamstats_url = gameURLs)
+
+
+season_stats$pbp_url <- gsub("game\\?", "playbyplay\\?", season_stats$pbp_url)
+season_stats$boxscore_url <- gsub("game\\?", "boxscore\\?", season_stats$boxscore_url)
+season_stats$teamstats_url <- gsub("game\\?", "matchup\\?", season_stats$teamstats_url)
+
+
+season_stats$duke_score <- ifelse(season_stats$win == "W",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2))
+
+season_stats$oppon_score <- ifelse(season_stats$win == "L",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2)) 
+
+season_stats$duke_logo_url <- "https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/150.png&w=50&h=50&transparent=true"
+
+season_stats$overtime <- ifelse(grepl("OT", season_stats$score), "yes", NA)
+season_stats$duke_score <- ifelse(grepl("OT", season_stats$duke_score), str_replace(season_stats$duke_score, " OT", ""), season_stats$duke_score)
+season_stats$oppon_score <- ifelse(grepl("OT", season_stats$oppon_score), str_replace(season_stats$oppon_score, " OT", ""), season_stats$oppon_score)
+
+
+season_stats$date <- substr(season_stats$date, 5, length(season_stats$date))
+
+
+season_stats$date <- str_replace_all(season_stats$date,"Jan ","1-")
+season_stats$date <- str_replace_all(season_stats$date,"Feb ","2-")
+season_stats$date <- str_replace_all(season_stats$date,"Mar ","3-")
+season_stats$date <- str_replace_all(season_stats$date,"Apr ","4-")
+season_stats$date <- str_replace_all(season_stats$date,"Sept ","9-")
+season_stats$date <- str_replace_all(season_stats$date,"Oct ","10-")
+season_stats$date <- str_replace_all(season_stats$date,"Nov ","11-")
+season_stats$date <- str_replace_all(season_stats$date,"Dec ","12-")
+
+season_stats$season <- "2014-2015"
+
+season_stats_condensed <- season_stats[c("season", "date", "opponet", "location", "duke_score", "oppon_score", "overtime", "duke_logo_url", "oppon_logo_url", "pbp_url", "boxscore_url", "teamstats_url")]
+
+
+#put post season games at end
+season_1415 <- rbind(season_stats_condensed[7:nrow(season_stats_condensed),], season_stats_condensed[1:6,])
+season_1415 <- season_1415 %>%
+  mutate_if(is.character, str_trim)
+
+season_1415$date <-trimws(season_1415$date, "b")
+season_1415$location <-trimws(season_1415$location, "b")
+season_1415$opponet <-trimws(season_1415$opponet, "b")
+
+all_seasons <- season_1415
+
+
+
+
+
+# 2015-2016
+season_url <- "https://www.espn.com/mens-college-basketball/team/schedule/_/id/150/season/2016"
+webpage <- read_html(season_url)
+dates <- html_nodes(webpage,'.Table2__even+ .Table2__even .Table2__td:nth-child(1)') %>% html_text()
+  
+dates.to.remove <- grepl("MEN'S", dates) | grepl("Date", dates) | grepl("Regular Season", dates)
+# remove found elements
+dates <- dates[!dates.to.remove]
+
+opponets <- html_nodes(webpage,'.tc+ span a') %>% html_text()
+opponet_logo <- html_nodes(webpage,'.pr2 img')
+opponet_logo_link <- html_attr(opponet_logo, "src")
+
+scores <- html_nodes(webpage,'.ml4 a') %>% html_text()
+gameURLs <- html_nodes(webpage,'.ml4 a') %>% html_attr("href") 
+
+win <- html_nodes(webpage,'.Table2__td .fw-bold') %>% html_text() 
+
+location <- html_nodes(webpage,'.pr2:nth-child(1)') %>% html_text() 
+
+season_stats <- data.frame(date = dates, location = location, opponet = opponets, score = scores, win = win, oppon_logo_url = opponet_logo_link, pbp_url = gameURLs, boxscore_url = gameURLs, teamstats_url = gameURLs)
+
+
+season_stats$pbp_url <- gsub("game\\?", "playbyplay\\?", season_stats$pbp_url)
+season_stats$boxscore_url <- gsub("game\\?", "boxscore\\?", season_stats$boxscore_url)
+season_stats$teamstats_url <- gsub("game\\?", "matchup\\?", season_stats$teamstats_url)
+
+
+season_stats$duke_score <- ifelse(season_stats$win == "W",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2))
+
+season_stats$oppon_score <- ifelse(season_stats$win == "L",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2)) 
+
+season_stats$duke_logo_url <- "https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/150.png&w=50&h=50&transparent=true"
+
+season_stats$overtime <- ifelse(grepl("OT", season_stats$score), "yes", NA)
+season_stats$duke_score <- ifelse(grepl("OT", season_stats$duke_score), str_replace(season_stats$duke_score, " OT", ""), season_stats$duke_score)
+season_stats$oppon_score <- ifelse(grepl("OT", season_stats$oppon_score), str_replace(season_stats$oppon_score, " OT", ""), season_stats$oppon_score)
+
+
+season_stats$date <- substr(season_stats$date, 5, length(season_stats$date))
+
+
+season_stats$date <- str_replace_all(season_stats$date,"Jan ","1-")
+season_stats$date <- str_replace_all(season_stats$date,"Feb ","2-")
+season_stats$date <- str_replace_all(season_stats$date,"Mar ","3-")
+season_stats$date <- str_replace_all(season_stats$date,"Apr ","4-")
+season_stats$date <- str_replace_all(season_stats$date,"Sept ","9-")
+season_stats$date <- str_replace_all(season_stats$date,"Oct ","10-")
+season_stats$date <- str_replace_all(season_stats$date,"Nov ","11-")
+season_stats$date <- str_replace_all(season_stats$date,"Dec ","12-")
+
+season_stats$season <- "2015-2016"
+
+season_stats_condensed <- season_stats[c("season", "date", "opponet", "location", "duke_score", "oppon_score", "overtime", "duke_logo_url", "oppon_logo_url", "pbp_url", "boxscore_url", "teamstats_url")]
+
+
+#put post season games at end
+season_stats_condensed <- rbind(season_stats_condensed[4:nrow(season_stats_condensed),], season_stats_condensed[1:3,])
+
+season_stats_condensed <- season_stats_condensed %>%
+  mutate_if(is.character, str_trim)
+
+season_1516 <- season_stats_condensed
+
+
+season_1516$date <-trimws(season_1516$date, "b")
+season_1516$location <-trimws(season_1516$location, "b")
+season_1516$opponet <-trimws(season_1516$opponet, "b")
+
+
+all_seasons <- rbind(all_seasons, season_1516)
+
+
+
+# 2016-2017
+season_url <- "https://www.espn.com/mens-college-basketball/team/schedule/_/id/150/season/2017"
+webpage <- read_html(season_url)
+dates <- html_nodes(webpage,'.Table2__even+ .Table2__even .Table2__td:nth-child(1)') %>% html_text()
+  
+dates.to.remove <- grepl("MEN'S", dates) | grepl("Date", dates) | grepl("Regular Season", dates)
+# remove found elements
+dates <- dates[!dates.to.remove]
+
+opponets <- html_nodes(webpage,'.tc+ span a') %>% html_text()
+opponet_logo <- html_nodes(webpage,'.pr2 img')
+opponet_logo_link <- html_attr(opponet_logo, "src")
+
+scores <- html_nodes(webpage,'.ml4 a') %>% html_text()
+gameURLs <- html_nodes(webpage,'.ml4 a') %>% html_attr("href") 
+
+win <- html_nodes(webpage,'.Table2__td .fw-bold') %>% html_text() 
+
+location <- html_nodes(webpage,'.pr2:nth-child(1)') %>% html_text() 
+
+season_stats <- data.frame(date = dates, location = location, opponet = opponets, score = scores, win = win, oppon_logo_url = opponet_logo_link, pbp_url = gameURLs, boxscore_url = gameURLs, teamstats_url = gameURLs)
+
+
+season_stats$pbp_url <- gsub("game\\?", "playbyplay\\?", season_stats$pbp_url)
+season_stats$boxscore_url <- gsub("game\\?", "boxscore\\?", season_stats$boxscore_url)
+season_stats$teamstats_url <- gsub("game\\?", "matchup\\?", season_stats$teamstats_url)
+
+
+season_stats$duke_score <- ifelse(season_stats$win == "W",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2))
+
+season_stats$oppon_score <- ifelse(season_stats$win == "L",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2)) 
+
+season_stats$duke_logo_url <- "https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/150.png&w=50&h=50&transparent=true"
+
+season_stats$overtime <- ifelse(grepl("OT", season_stats$score), "yes", NA)
+season_stats$duke_score <- ifelse(grepl("OT", season_stats$duke_score), str_replace(season_stats$duke_score, " OT", ""), season_stats$duke_score)
+season_stats$oppon_score <- ifelse(grepl("OT", season_stats$oppon_score), str_replace(season_stats$oppon_score, " OT", ""), season_stats$oppon_score)
+
+
+season_stats$date <- substr(season_stats$date, 5, length(season_stats$date))
+
+
+season_stats$date <- str_replace_all(season_stats$date,"Jan ","1-")
+season_stats$date <- str_replace_all(season_stats$date,"Feb ","2-")
+season_stats$date <- str_replace_all(season_stats$date,"Mar ","3-")
+season_stats$date <- str_replace_all(season_stats$date,"Apr ","4-")
+season_stats$date <- str_replace_all(season_stats$date,"Sept ","9-")
+season_stats$date <- str_replace_all(season_stats$date,"Oct ","10-")
+season_stats$date <- str_replace_all(season_stats$date,"Nov ","11-")
+season_stats$date <- str_replace_all(season_stats$date,"Dec ","12-")
+
+season_stats$season <- "2016-2017"
+
+season_stats_condensed <- season_stats[c("season", "date", "opponet", "location", "duke_score", "oppon_score", "overtime", "duke_logo_url", "oppon_logo_url", "pbp_url", "boxscore_url", "teamstats_url")]
+
+
+#put post season games at end
+season_stats_condensed <- rbind(season_stats_condensed[3:nrow(season_stats_condensed),], season_stats_condensed[1:2,])
+
+season_stats_condensed <- season_stats_condensed %>%
+  mutate_if(is.character, str_trim)
+
+season_1617 <- season_stats_condensed
+
+
+season_1617$date <-trimws(season_1617$date, "b")
+season_1617$location <-trimws(season_1617$location, "b")
+season_1617$opponet <-trimws(season_1617$opponet, "b")
+
+all_seasons <- rbind(all_seasons, season_1617)
+
+
+
+# 2017-2018
+season_url <- "https://www.espn.com/mens-college-basketball/team/schedule/_/id/150/season/2018"
+webpage <- read_html(season_url)
+dates <- html_nodes(webpage,'.Table2__even+ .Table2__even .Table2__td:nth-child(1)') %>% html_text()
+  
+dates.to.remove <- grepl("MEN'S", dates) | grepl("Date", dates) | grepl("Regular Season", dates)
+# remove found elements
+dates <- dates[!dates.to.remove]
+
+opponets <- html_nodes(webpage,'.tc+ span a') %>% html_text()
+opponet_logo <- html_nodes(webpage,'.pr2 img')
+opponet_logo_link <- html_attr(opponet_logo, "src")
+
+scores <- html_nodes(webpage,'.ml4 a') %>% html_text()
+gameURLs <- html_nodes(webpage,'.ml4 a') %>% html_attr("href") 
+
+win <- html_nodes(webpage,'.Table2__td .fw-bold') %>% html_text() 
+
+location <- html_nodes(webpage,'.pr2:nth-child(1)') %>% html_text() 
+
+season_stats <- data.frame(date = dates, location = location, opponet = opponets, score = scores, win = win, oppon_logo_url = opponet_logo_link, pbp_url = gameURLs, boxscore_url = gameURLs, teamstats_url = gameURLs)
+
+
+season_stats$pbp_url <- gsub("game\\?", "playbyplay\\?", season_stats$pbp_url)
+season_stats$boxscore_url <- gsub("game\\?", "boxscore\\?", season_stats$boxscore_url)
+season_stats$teamstats_url <- gsub("game\\?", "matchup\\?", season_stats$teamstats_url)
+
+season_stats$duke_score <- ifelse(season_stats$win == "W",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2))
+
+season_stats$oppon_score <- ifelse(season_stats$win == "L",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2)) 
+
+season_stats$duke_logo_url <- "https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/150.png&w=50&h=50&transparent=true"
+
+season_stats$overtime <- ifelse(grepl("OT", season_stats$score), "yes", NA)
+season_stats$duke_score <- ifelse(grepl("OT", season_stats$duke_score), str_replace(season_stats$duke_score, " OT", ""), season_stats$duke_score)
+season_stats$oppon_score <- ifelse(grepl("OT", season_stats$oppon_score), str_replace(season_stats$oppon_score, " OT", ""), season_stats$oppon_score)
+
+
+season_stats$date <- substr(season_stats$date, 5, length(season_stats$date))
+
+
+season_stats$date <- str_replace_all(season_stats$date,"Jan ","1-")
+season_stats$date <- str_replace_all(season_stats$date,"Feb ","2-")
+season_stats$date <- str_replace_all(season_stats$date,"Mar ","3-")
+season_stats$date <- str_replace_all(season_stats$date,"Apr ","4-")
+season_stats$date <- str_replace_all(season_stats$date,"Sept ","9-")
+season_stats$date <- str_replace_all(season_stats$date,"Oct ","10-")
+season_stats$date <- str_replace_all(season_stats$date,"Nov ","11-")
+season_stats$date <- str_replace_all(season_stats$date,"Dec ","12-")
+
+season_stats$season <- "2017-2018"
+
+season_stats_condensed <- season_stats[c("season", "date", "opponet", "location", "duke_score", "oppon_score", "overtime", "duke_logo_url", "oppon_logo_url", "pbp_url", "boxscore_url", "teamstats_url")]
+
+
+#put post season games at end
+season_stats_condensed <- rbind(season_stats_condensed[5:nrow(season_stats_condensed),], season_stats_condensed[1:4,])
+
+season_stats_condensed <- season_stats_condensed %>%
+  mutate_if(is.character, str_trim)
+
+
+season_1718 <- season_stats_condensed
+
+
+season_1718$date <-trimws(season_1718$date, "b")
+season_1718$location <-trimws(season_1718$location, "b")
+season_1718$opponet <-trimws(season_1718$opponet, "b")
+
+
+
+all_seasons <- rbind(all_seasons, season_1718)
+
+
+
+
+# 2018-2019
+season_url <- "https://www.espn.com/mens-college-basketball/team/schedule/_/id/150/season/2019"
+webpage <- read_html(season_url)
+dates <- html_nodes(webpage,'.Table2__even+ .Table2__even .Table2__td:nth-child(1)') %>% html_text()
+  
+dates.to.remove <- grepl("MEN'S", dates) | grepl("Date", dates) | grepl("Regular Season", dates)
+# remove found elements
+dates <- dates[!dates.to.remove]
+
+opponets <- html_nodes(webpage,'.tc+ span a') %>% html_text()
+opponet_logo <- html_nodes(webpage,'.pr2 img')
+opponet_logo_link <- html_attr(opponet_logo, "src")
+
+scores <- html_nodes(webpage,'.ml4 a') %>% html_text()
+gameURLs <- html_nodes(webpage,'.ml4 a') %>% html_attr("href") 
+
+win <- html_nodes(webpage,'.Table2__td .fw-bold') %>% html_text() 
+
+location <- html_nodes(webpage,'.pr2:nth-child(1)') %>% html_text() 
+
+season_stats <- data.frame(date = dates, location = location, opponet = opponets, score = scores, win = win, oppon_logo_url = opponet_logo_link, pbp_url = gameURLs, boxscore_url = gameURLs, teamstats_url = gameURLs)
+
+
+season_stats$pbp_url <- gsub("game\\?", "playbyplay\\?", season_stats$pbp_url)
+season_stats$boxscore_url <- gsub("game\\?", "boxscore\\?", season_stats$boxscore_url)
+season_stats$teamstats_url <- gsub("game\\?", "matchup\\?", season_stats$teamstats_url)
+
+
+season_stats$duke_score <- ifelse(season_stats$win == "W",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2))
+
+season_stats$oppon_score <- ifelse(season_stats$win == "L",  sapply(strsplit(as.character(season_stats$score),'-'), "[", 1), sapply(strsplit(as.character(season_stats$score),'-'), "[", 2)) 
+
+season_stats$duke_logo_url <- "https://a.espncdn.com/combiner/i?img=/i/teamlogos/ncaa/500/150.png&w=50&h=50&transparent=true"
+
+season_stats$overtime <- ifelse(grepl("OT", season_stats$score), "yes", NA)
+season_stats$duke_score <- ifelse(grepl("OT", season_stats$duke_score), str_replace(season_stats$duke_score, " OT", ""), season_stats$duke_score)
+season_stats$oppon_score <- ifelse(grepl("OT", season_stats$oppon_score), str_replace(season_stats$oppon_score, " OT", ""), season_stats$oppon_score)
+
+
+season_stats$date <- substr(season_stats$date, 5, length(season_stats$date))
+
+
+season_stats$date <- str_replace_all(season_stats$date,"Jan ","1-")
+season_stats$date <- str_replace_all(season_stats$date,"Feb ","2-")
+season_stats$date <- str_replace_all(season_stats$date,"Mar ","3-")
+season_stats$date <- str_replace_all(season_stats$date,"Apr ","4-")
+season_stats$date <- str_replace_all(season_stats$date,"Sept ","9-")
+season_stats$date <- str_replace_all(season_stats$date,"Oct ","10-")
+season_stats$date <- str_replace_all(season_stats$date,"Nov ","11-")
+season_stats$date <- str_replace_all(season_stats$date,"Dec ","12-")
+
+season_stats$season <- "2018-2019"
+
+season_stats_condensed <- season_stats[c("season", "date", "opponet", "location", "duke_score", "oppon_score", "overtime", "duke_logo_url", "oppon_logo_url", "pbp_url", "boxscore_url", "teamstats_url")]
+
+
+#put post season games at end
+season_stats_condensed <- rbind(season_stats_condensed[5:nrow(season_stats_condensed),], season_stats_condensed[1:4,])
+
+season_stats_condensed <- season_stats_condensed %>%
+  mutate_if(is.character, str_trim)
+
+
+season_1819 <- season_stats_condensed
+
+
+season_1819$date <-trimws(season_1819$date, "b")
+season_1819$location <-trimws(season_1819$location, "b")
+season_1819$opponet <-trimws(season_1819$opponet, "b")
+
+all_seasons <- rbind(all_seasons, season_1819)
+
+```
+
+
+
+
+# delete games that have no ESPN PBP data or bad boxscore entries
+# some of these cases involve a player changing his name and ESPN not using his name consistently = unable to web scrape
+# also deleted are games where there are two people on the same team with the same last name and first initial- fix in the future
+```{r}
+delete_1415 <- c("11-14", "11-15", "11-21", "11-22", "11-26", "1-13", "3-12")
+season_1415 <- season_1415[which(!(season_1415$date %in% delete_1415)),]
+
+delete_1516 <- c("12-15", "12-28", "1-23", "1-25", "2-6", "3-9")
+season_1516 <- season_1516[which(!(season_1516$date %in% delete_1516)),]
+
+delete_1617 <- c("11-19", "12-10", "12-19", "12-21", "1-21", "3-10")
+season_1617 <- season_1617[which(!(season_1617$date %in% delete_1617)),]
+
+delete_1718 <- c("12-30", "1-15", "3-25")
+season_1718 <- season_1718[which(!(season_1718$date %in% delete_1718)),]
+
+delete_1819 <- c("2-5")
+season_1819 <- season_1819[which(!(season_1819$date %in% delete_1819)),]
+```
+
+
+```{r}
+setwd("~/Desktop/Data+/Basketball Analytics")
+
+write.csv(season_1415, "season_1415.csv")
+write.csv(season_1516, "season_1516.csv")
+write.csv(season_1617, "season_1617.csv")
+write.csv(season_1718, "season_1718.csv")
+write.csv(season_1819, "season_1819.csv")
+
+
+```
+
+

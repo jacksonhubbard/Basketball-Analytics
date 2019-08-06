@@ -1,0 +1,73 @@
+/* width: 100%; padding: 0 !important; margin: 0 !important
+
+ .landing-wrapper .foreground-content{
+	position: absolute;
+	top: 36%;
+	z-index: 9999;
+	display: block;
+	justify-content: center;
+	align-items: center;
+}
+
+
+*/
+
+
+html,body{
+	width: 100%;
+	padding: 0;
+	margin: 0;
+}
+
+/* overriding bootstrap */
+.container-fluid,
+.navbar{
+	 border-left: 0;
+	 border-right: 0;
+	 padding: 0 13px !important;
+	 margin: 0 !important;
+	 width: 100%;
+	
+	
+}
+
+/* layout css */
+.landing-wrapper {}
+
+
+.landing-wrapper .landing-block{
+	width: 100%;
+	height: 100vh;
+}
+
+
+.landing-wrapper .background-content img{	
+	display: block;
+	width: 102%;
+	height: 100%;
+	margin-left: -13px;
+}
+
+
+.landing-wrapper .foreground-content{
+	opacity: 0.65;
+	position: absolute;
+	display: inherit;
+	top: 17%;
+	left: 36%;
+	justify-content: center;
+	align-items: center;
+}
+
+.landing-wrapper .foreground-content .foreground-text{
+	top: 1%;
+	width: 30%;
+	padding: 2.5%;
+	color: black;
+	background-color: white;
+	text-align: center;
+}
+
+.landing-wrapper .foreground-content .foreground-text h1{font-size: 4.0rem; font-family: impact; color: rgba(0, 83, 155, 1);}
+.landing-wrapper .foreground-content .foreground-text p{font-size: 2.0rem; } 
+
